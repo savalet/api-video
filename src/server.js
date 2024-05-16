@@ -28,6 +28,7 @@ app.get('/', function (req, res) {
     req_logger.log(req, res, "/")
 })
 app.use('/users', require('./routes/users/index.js'));
+app.use('/media/stream', require('./routes/media/stream/index.js'));
 
 app.listen(3000)
 logger.info(`The API is listening on port ${srv_config.port}`)
