@@ -21,7 +21,7 @@ logger.info(`
      /___/
 `)
 
-mysql.connect()
+//mysql.connect()
 
 app.get('/', function (req, res) {
     res.send('Vyme api is running')

@@ -133,3 +133,4 @@ config
 data
 .vscode
 cache
+.direnv

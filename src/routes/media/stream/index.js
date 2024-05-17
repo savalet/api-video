@@ -25,7 +25,8 @@ router.get('', function (req, res) {
         '-ss', req.query.start_time || '00:00:01', // start time
         '-i', path,
         //'-c:v', 'libx264', // CPU encoding (software)
-        '-c:v', 'h264_nvenc', // GPU encoding (hardware)
+        //'-c:v', 'h264_nvenc', // Nvidia GPU encoding (hardware)
+        '-c:v', 'h264_amf', // AMD GPU encoding (hardware)
         '-preset', 'fast', // quality preset
         '-pix_fmt', 'yuv420p', // pixel format
         '-c:a', req.query.audio_codec || 'libvorbis', // audio codec
