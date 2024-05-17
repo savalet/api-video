@@ -1,16 +1,134 @@
-
 <!doctype html>
 <html>
 <head>
   <meta charset="utf-8">
   <title>Vyme MP4 Stream Test</title>
   <link href="https://unpkg.com/video.js/dist/video-js.css" rel="stylesheet">
+  <style>
+    .video-container {
+      position: relative;
+      width: 100%;
+      max-width: 640px;
+      margin: 0 auto;
+    }
+
+    .video-controls {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 5px;
+    }
+
+    .play-pause-button,
+    .time-display {
+      color: #fff;
+      cursor: pointer;
+    }
+
+    .progress-bar {
+      flex: 1;
+      height: 10px;
+      margin: 0 10px;
+      background-color: #ddd;
+      position: relative;
+      cursor: pointer;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background-color: #4CAF50;
+      width: 0%;
+    }
+  </style>
 </head>
 <body>
   <h1>Vyme MP4 Stream Test</h1>
-  <video id="videojs-flvjs-player" class="video-js" controls>
-    <source src="http://localhost:3000/media/stream?bitrate=10M" type='video/mp4'>
-  </video>
+  <div class="video-container">
+    <video id="player" class="video-js" controls autoplay>
+      <source src="http://localhost:3000/media/stream?bitrate=10M" type='video/mp4'>
+    </video>
+    <div class="video-controls">
+      <div class="play-pause-button">Play</div>
+      <div class="progress-bar">
+        <div class="progress-bar-fill"></div>
+      </div>
+      <div class="time-display">
+        <span class="current-time">00:00:00</span> / <span class="duration">00:00:00</span>
+      </div>
+    </div>
+  </div>
   <script src="https://unpkg.com/video.js/dist/video.min.js"></script>
+  <script>
+    var time = 0;
+    var changed_time = 0;
+    const video_duration = 9354;
+    var player = videojs('player', {
+      width: '600%',
+      controlBar: false
+    });
+
+    function updateTimeDisplay() {
+      var currentTimeDisplay = document.querySelector('.current-time');
+      var durationDisplay = document.querySelector('.duration');
+
+      currentTimeDisplay.textContent = formatTime(time);
+      durationDisplay.textContent = formatTime(video_duration);
+    }
+
+    function updateProgressBar() {
+      var progressBarFill = document.querySelector('.progress-bar-fill');
+      var progress = (time / video_duration) * 100;
+      progressBarFill.style.width = progress + '%';
+    }
+
+    function formatTime(time) {
+      var hours = Math.floor(time / 3600);
+      var minutes = Math.floor((time % 3600) / 60);
+      var seconds = Math.floor(time % 60);
+      return pad(hours) + ':' + pad(minutes) + ':' + pad(seconds);
+    }
+
+    function pad(number) {
+      return (number < 10) ? '0' + number : number;
+    }
+
+    var playPauseButton = document.querySelector('.play-pause-button');
+    playPauseButton.addEventListener('click', function() {
+      if (player.paused()) {
+        player.play();
+        playPauseButton.textContent = 'Pause';
+      } else {
+        player.pause();
+        playPauseButton.textContent = 'Play';
+      }
+    });
+
+    var progressBar = document.querySelector('.progress-bar');
+    progressBar.addEventListener('click', function(event) {
+      var progressBarWidth = this.offsetWidth;
+      var clickPosition = event.clientX - this.getBoundingClientRect().left;
+      var clickPercentage = clickPosition / progressBarWidth;
+      var newTime = clickPercentage * video_duration;
+      changed_time = newTime;
+      var hours = Math.floor(newTime / 3600);
+      var minutes = Math.floor((newTime % 3600) / 60);
+      var seconds = Math.floor(newTime % 60);
+      var timeString = pad(hours) + ':' + pad(minutes) + ':' + pad(seconds);
+      console.log('New source:', `http://localhost:3000/media/stream?bitrate=10M&start_time=${timeString}`);
+      player.src({ type: "video/mp4", src: `http://localhost:3000/media/stream?bitrate=10M&start_time=${timeString}`});
+      player.play();
+    });
+
+    player.on('timeupdate', function() {
+      time = player.currentTime() + changed_time;
+      updateTimeDisplay();
+      updateProgressBar();
+    });
+  </script>
 </body>
 </html>

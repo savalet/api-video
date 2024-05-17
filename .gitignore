@@ -132,3 +132,4 @@ dist
 config
 data
 .vscode
+cache

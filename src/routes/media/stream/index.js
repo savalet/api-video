@@ -9,30 +9,42 @@ const router = require('express').Router()
 const logger = require('@savalet/easy-logs')
 const req_logger = require('../../../utils/req_logger')
 const { spawn } = require('child_process');
-var fs = require('fs')
 const route_name = "/media/stream"
 logger.info(`${route_name} route loaded !`)
 
 router.get('', function (req, res) {
     var path = 'data/Dune.2021.MULTI.VFF.2160p.4KLight.HDR10.WebRip.x265.E-AC3.Atmos-BONBON.mkv';
+    scale = null
 
-    const ffmpegProcess = spawn('ffmpeg', [
+    if (req.query.scale) {
+        scale = 'scale=' + req.query.scale
+    }
+
+    const ffmpeg = spawn('ffmpeg', [
+        '-async', '1', // audio sync
+        '-ss', req.query.start_time || '00:00:01', // start time
         '-i', path,
-        // Use this for CPU encoding : '-c:v', 'libx264',
-        '-c:v', 'h264_nvenc',
-        '-preset', 'fast',
-        '-pix_fmt', 'yuv420p',
-        '-c:a', 'libvorbis',
-        '-b:v', req.query.bitrate || '1M',
+        //'-c:v', 'libx264', // CPU encoding (software)
+        '-c:v', 'h264_nvenc', // GPU encoding (hardware)
+        '-preset', 'fast', // quality preset
+        '-pix_fmt', 'yuv420p', // pixel format
+        '-c:a', req.query.audio_codec || 'libvorbis', // audio codec
+        '-vf', scale || 'scale=1920:-1', // retain aspect ratio
+        //'-vf', 'scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:-1:-1:color=black', // force aspect ratio and fill with black color if needed (no crop)
+        '-b:v', req.query.bitrate || '10M', // video bitrate
         '-movflags', 'isml+frag_keyframe',
         '-g', '30',
         '-force_key_frames', 'expr:gte(t,n_forced*2)',
-        '-f', 'mp4',
+        '-metadata', `start_time=${req.query.start_time || '00:02:00'}`, // Metadata for start time
+        '-metadata', `end_time=${req.query.end_time || '00:10:00'}`, // Metadata for end time, default is 10 minutes
+        '-f', 'mp4', // output format
         'pipe:1'
     ])
 
-    ffmpegProcess.stderr.on('data', (data) => {
-        logger.debug(`FFmpeg output: ${data}`)
+    ffmpeg.stderr.on('data', (data) => {
+        if (data.length > 1) {
+            logger.debug(`FFMPEG output: ${data}`)
+        }
     })
 
     res.set({
@@ -45,12 +57,16 @@ router.get('', function (req, res) {
         'Keep-Alive': 'timeout=120, max=600',
     });
 
-    ffmpegProcess.stdout.pipe(res);
+    ffmpeg.stdout.pipe(res)
 
     res.on('close', () => {
-        logger.info('Connection closed, killing FFmpeg process...')
-        ffmpegProcess.kill('SIGINT');
-        logger.info('FFmpeg process killed')
+        logger.info('Connection closed, killing FFMPEG process...')
+        try {
+            ffmpeg.kill('SIGINT')
+            logger.info('FFMPEG process killed')
+        } catch (e) {
+            logger.error('Error while killing FFMPEG process', e)
+        }
     })
     req_logger.log(req, res, route_name)
 })
