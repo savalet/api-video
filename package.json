@@ -22,13 +22,8 @@
   "homepage": "https://github.com/vyme-dev/api#readme",
   "dependencies": {
     "@savalet/easy-logs": "^1.0.2",
-    "bcrypt": "^5.1.1",
-    "cookie-parser": "^1.4.6",
-    "crypto": "^1.0.1",
     "express": "^4.19.2",
     "fs": "^0.0.1-security",
-    "https": "^1.0.0",
-    "mysql": "^2.18.1",
-    "node-fetch": "^3.3.2"
+    "mysql": "^2.18.1"
   }
 }

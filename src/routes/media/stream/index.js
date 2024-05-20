@@ -8,12 +8,13 @@
 const router = require('express').Router()
 const logger = require('@savalet/easy-logs')
 const req_logger = require('../../../utils/req_logger')
+const stream_config = require('../../../../config/stream.json')
 const { spawn } = require('child_process');
 const route_name = "/media/stream"
 logger.info(`${route_name} route loaded !`)
 
 router.get('', function (req, res) {
-    var path = 'data/Dune.2021.MULTI.VFF.2160p.4KLight.HDR10.WebRip.x265.E-AC3.Atmos-BONBON.mkv';
+    var path = 'data/test.mkv';
     scale = null
 
     if (req.query.scale) {
@@ -24,21 +25,17 @@ router.get('', function (req, res) {
         '-async', '1', // audio sync
         '-ss', req.query.start_time || '00:00:01', // start time
         '-i', path,
-        //'-c:v', 'libx264', // CPU encoding (software)
-        //'-c:v', 'h264_nvenc', // Nvidia GPU encoding (hardware)
-        '-c:v', 'h264_amf', // AMD GPU encoding (hardware)
-        '-preset', 'fast', // quality preset
-        '-pix_fmt', 'yuv420p', // pixel format
-        '-c:a', req.query.audio_codec || 'libvorbis', // audio codec
+        '-c:v', stream_config.video_codec,
+        '-preset', 'fast',
+        '-pix_fmt', 'yuv420p',
+        '-c:a', req.query.audio_codec || 'libvorbis',
         '-vf', scale || 'scale=1920:-1', // retain aspect ratio
         //'-vf', 'scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:-1:-1:color=black', // force aspect ratio and fill with black color if needed (no crop)
-        '-b:v', req.query.bitrate || '10M', // video bitrate
+        '-b:v', req.query.bitrate || '10M',
         '-movflags', 'isml+frag_keyframe',
         '-g', '30',
         '-force_key_frames', 'expr:gte(t,n_forced*2)',
-        '-metadata', `start_time=${req.query.start_time || '00:02:00'}`, // Metadata for start time
-        '-metadata', `end_time=${req.query.end_time || '00:10:00'}`, // Metadata for end time, default is 10 minutes
-        '-f', 'mp4', // output format
+        '-f', 'mp4',
         'pipe:1'
     ])
 
