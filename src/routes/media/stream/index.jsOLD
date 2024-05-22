@@ -11,7 +11,7 @@ const req_logger = require('../../../utils/req_logger')
 const stream_config = require('../../../../config/stream.json')
 const { spawn } = require('child_process');
 const route_name = "/media/stream"
-logger.info(`${route_name} route loaded !`)
+logger.info(`${route_name} route loaded`)
 
 router.get('', function (req, res) {
     var path = 'data/test.mkv';
@@ -28,15 +28,18 @@ router.get('', function (req, res) {
         '-c:v', stream_config.video_codec,
         '-preset', 'fast',
         '-pix_fmt', 'yuv420p',
-        '-c:a', req.query.audio_codec || 'libvorbis',
+        '-c:a', req.query.audio_codec || 'mp3',
         '-vf', scale || 'scale=1920:-1', // retain aspect ratio
         //'-vf', 'scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:-1:-1:color=black', // force aspect ratio and fill with black color if needed (no crop)
         '-b:v', req.query.bitrate || '10M',
-        '-movflags', 'isml+frag_keyframe',
-        '-g', '30',
-        '-force_key_frames', 'expr:gte(t,n_forced*2)',
-        '-f', 'mp4',
-        'pipe:1'
+        //'-movflags', 'isml+frag_keyframe',
+        //'-g', '30',
+        //'-force_key_frames', 'expr:gte(t,n_forced*2)',
+        '-hls_time', '10',
+        '-hls_list_size', '0',
+        '-f', 'hls',
+        'cache/dune/stream.m3u8'
+        //'pipe:1'
     ])
 
     ffmpeg.stderr.on('data', (data) => {
@@ -48,11 +51,10 @@ router.get('', function (req, res) {
     res.set({
         'Content-Type': 'video/mp4',
         'Transfer-Encoding': 'chunked',
-        'Content-Disposition': 'inline; filename="vyme-stream.mp4"',
         'Connection': 'keep-alive',
         'Cache-Control': 'no-cache',
         'Pragma': 'no-cache',
-        'Keep-Alive': 'timeout=120, max=600',
+        'Keep-Alive': 'timeout=120000, max=600000'
     });
 
     ffmpeg.stdout.pipe(res)

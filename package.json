@@ -1,6 +1,6 @@
 {
   "name": "vyme-api",
-  "version": "1.0.0",
+  "version": "DEV",
   "description": "Vyme api",
   "main": "server.js",
   "scripts": {
@@ -15,7 +15,7 @@
     "api"
   ],
   "author": "savalet",
-  "license": "SEE LICENCE IN LICENCE",
+  "license": "SEE LICENCE IN LICENCE FILE",
   "bugs": {
     "url": "https://github.com/vyme-dev/api/issues"
   },
@@ -23,7 +23,10 @@
   "dependencies": {
     "@savalet/easy-logs": "^1.0.2",
     "express": "^4.19.2",
+    "express-ws": "^5.0.2",
     "fs": "^0.0.1-security",
-    "mysql": "^2.18.1"
+    "mysql": "^2.18.1",
+    "path": "^0.12.7",
+    "ws": "^8.17.0"
   }
 }

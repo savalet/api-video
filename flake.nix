@@ -1,5 +1,5 @@
 {
-  description = "Your flake name";
+  description = "Vyme flake";
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
@@ -15,8 +15,6 @@
             buildInputs = with pkgs; [
               nodejs_22
               ffmpeg_7-full
-              vulkan-tools
-              amdvlk
             ];
           };
       });
