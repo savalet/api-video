@@ -39,9 +39,6 @@ function create(server) {
                     '-vf', scale || 'scale=1920:-1', // retain aspect ratio
                     //'-vf', 'scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:-1:-1:color=black', // force aspect ratio and fill with black color if needed (no crop)
                     '-b:v', req.query.bitrate || '10M',
-                    //'-movflags', 'isml+frag_keyframe',
-                    //'-g', '30',
-                    //'-force_key_frames', 'expr:gte(t,n_forced*2)',
                     '-hls_time', '10',
                     '-hls_list_size', '0',
                     '-f', 'hls',
