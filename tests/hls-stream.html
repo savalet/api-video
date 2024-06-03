@@ -1,30 +1,178 @@
-
 <!doctype html>
 <html>
 <head>
-  <meta charset="utf-8">
-  <title>Vyme HLS Stream Test</title>
-  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <meta charset="utf-8">
+    <title>Vyme HLS Stream Test</title>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <style>
+        .video-container {
+            position: relative;
+            width: 100%;
+            max-width: 840px;
+            margin: 0 auto;
+        }
+    
+        .video-controls {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 5px;
+        }
+    
+        .play-pause-button,
+        .time-display {
+            color: #fff;
+            cursor: pointer;
+        }
+    
+        .progress-bar {
+            flex: 1;
+            height: 5px;
+            margin: 0 5px;
+            background-color: #ddd;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .buffer-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            background-color: #5d93e2;
+            width: 0%;
+        }
+    
+        .progress-bar-fill {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            background-color: #225cb3;
+            width: 0%;
+        }
+      </style>
 </head>
 <body>
-  <h1>Vyme HLS Stream Test</h1>
-  <video id="video" controls></video>
-  <script>
-      if (Hls.isSupported()) {
-          var video = document.getElementById('video');
-          var hls = new Hls();
-          hls.loadSource('http://localhost:3000/media/stream?bitrate=10M');
-          hls.attachMedia(video);
-          hls.on(Hls.Events.MANIFEST_PARSED, function () {
-              video.play();
-          });
-      }
-      else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-          video.src = 'http://localhost:3000/media/stream?bitrate=10M';
-          video.addEventListener('loadedmetadata', function () {
-              video.play();
-          });
-      }
+    <h1>Vyme HLS Stream Test</h1>
+    <div class="video-container">
+        <video width="850px" id="player" autoplay>
+          <source src="http://localhost:3000/media/stream?bitrate=10M" type='video/mp4'>
+        </video>
+        <div class="video-controls">
+          <div class="play-pause-button">Play</div>
+          <div class="progress-bar">
+            <div class="buffer-bar"></div>
+            <div class="progress-bar-fill"></div>
+          </div>
+          <div class="time-display">
+            <span class="current-time">00:00:00</span> / <span class="duration">00:00:00</span>
+          </div>
+        </div>
+      </div>
+    <script>
+        var player = document.getElementById('player');
+        var time = 0;
+        var changed_time = 0;
+        const video_duration = 9354;
+
+        if(Hls.isSupported()) {
+            var hls = new Hls();
+            hls.loadSource('http://localhost:3000/media/stream/dl/stream.m3u8');
+            hls.attachMedia(player);
+            hls.on(Hls.Events.MANIFEST_PARSED,function() {
+                player.play();
+            });
+        }
+        else if (player.canPlayType('application/vnd.apple.mpegurl')) {
+            player.src = 'http://localhost:3000/media/stream/dl/stream.m3u8';
+            player.addEventListener('canplay',function() {
+                player.play();
+            });
+        }
+
+        function updateTimeDisplay() {
+            var currentTimeDisplay = document.querySelector('.current-time');
+            var durationDisplay = document.querySelector('.duration');
+
+            currentTimeDisplay.textContent = formatTime(time);
+            durationDisplay.textContent = formatTime(video_duration);
+        }
+
+        function updateProgressBar() {
+            var progressBarFill = document.querySelector('.progress-bar-fill');
+            var progress = (time / video_duration) * 100;
+            progressBarFill.style.width = progress + '%';
+        }
+
+        function updateBufferBar() {
+            var bufferBar = document.querySelector('.buffer-bar');
+            var bufferProgress = (player.duration / video_duration) * 100;
+            bufferBar.style.width = bufferProgress + '%';
+        }
+
+        function formatTime(time) {
+            var hours = Math.floor(time / 3600);
+            var minutes = Math.floor((time % 3600) / 60);
+            var seconds = Math.floor(time % 60);
+            return pad(hours) + ':' + pad(minutes) + ':' + pad(seconds);
+        }
+
+        function pad(number) {
+            return (number < 10) ? '0' + number : number;
+        }
+
+        var playPauseButton = document.querySelector('.play-pause-button');
+        playPauseButton.addEventListener('click', function() {
+            if (player.paused) {
+                player.play();
+                playPauseButton.textContent = 'Pause';
+            } else {
+                player.pause();
+                playPauseButton.textContent = 'Play';
+            }
+        });
+
+        var videoContainer = document.querySelector('.video-container');
+        videoContainer.addEventListener('click', function() {
+            if (player.paused) {
+                player.play();
+            } else {
+                player.pause();
+            }
+        });
+
+        var progressBar = document.querySelector('.progress-bar');
+        progressBar.addEventListener('click', function(event) {
+            var progressBarWidth = this.offsetWidth;
+            var clickPosition = event.clientX - this.getBoundingClientRect().left;
+            var clickPercentage = clickPosition / progressBarWidth;
+            var newTime = clickPercentage * video_duration;
+            changed_time = newTime;
+            var hours = Math.floor(newTime / 3600);
+            var minutes = Math.floor((newTime % 3600) / 60);
+            var seconds = Math.floor(newTime % 60);
+            var timeString = pad(hours) + ':' + pad(minutes) + ':' + pad(seconds);
+            console.log('New source:', `http://localhost:3000/media/stream?bitrate=10M&start_time=${timeString}`);
+            player.src({
+                type: "video/mp4",
+                src: `http://localhost:3000/media/stream?bitrate=10M&start_time=${timeString}`
+            });
+            player.play();
+        });
+
+        player.addEventListener('timeupdate', function() {
+            time = player.currentTime + changed_time;
+            console.log('Player time:', player.currentTime, 'Duration:', player.duration);
+            updateTimeDisplay();
+            updateProgressBar();
+            updateBufferBar();
+        });
   </script>
 </body>
 </html>
