@@ -75,25 +75,44 @@
           </div>
         </div>
       </div>
+      <p id="debug">FFMPEG Debug:</p>
     <script>
-        var player = document.getElementById('player');
+        const socket = new WebSocket('ws://localhost:3000/media/stream/ws');
+        const player = document.getElementById('player');
+        const debug = document.getElementById('debug');
+        const video_duration = 9354;
         var time = 0;
         var changed_time = 0;
-        const video_duration = 9354;
 
-        if(Hls.isSupported()) {
-            var hls = new Hls();
-            hls.loadSource('http://localhost:3000/media/stream/dl/stream.m3u8');
-            hls.attachMedia(player);
-            hls.on(Hls.Events.MANIFEST_PARSED,function() {
-                player.play();
-            });
-        }
-        else if (player.canPlayType('application/vnd.apple.mpegurl')) {
-            player.src = 'http://localhost:3000/media/stream/dl/stream.m3u8';
-            player.addEventListener('canplay',function() {
-                player.play();
-            });
+        socket.onopen = (event) => {
+            socket.send("Client connected !");
+            console.log('[DEBUG] Connected to websocket');
+            socket.send("ffmpeg");
+            console.log('[DEBUG] FFMPEG command sent to server');
+        };
+
+        socket.onmessage = (event) => {
+            console.log('[DEBUG] WS Received : ' + event.data);
+            debug.textContent = "Debug: " + event.data;
+            if (event.data === 'FFMPEG hls stream ready') {
+                loadVideo();
+            }
+        };
+
+        function loadVideo() {
+            if (Hls.isSupported()) {
+                var hls = new Hls();
+                hls.loadSource('http://localhost:3000/media/stream/dl/stream.m3u8');
+                hls.attachMedia(player);
+                hls.on(Hls.Events.MANIFEST_PARSED, function() {
+                    player.play();
+                });
+            } else if (player.canPlayType('application/vnd.apple.mpegurl')) {
+                player.src = 'http://localhost:3000/media/stream/dl/stream.m3u8';
+                player.addEventListener('canplay', function() {
+                    player.play();
+                });
+            }
         }
 
         function updateTimeDisplay() {
@@ -168,7 +187,7 @@
 
         player.addEventListener('timeupdate', function() {
             time = player.currentTime + changed_time;
-            console.log('Player time:', player.currentTime, 'Duration:', player.duration);
+            console.log('[DEBUG] Player time:', player.currentTime, 'Duration:', player.duration);
             updateTimeDisplay();
             updateProgressBar();
             updateBufferBar();

@@ -20,8 +20,9 @@ function create(server) {
         ws.on('message', (message) => {
             logger.debug(`[WS] Received message: ${message}`);
             if (message === 'ffmpeg') {
-                ws.send('Launching FFMPEG...');
-                var path = 'data/test.mkv';
+                ws.send('Launching FFMPEG...')
+                var path = 'data/test.mkv'
+                var ready = false
                 scale = null
 
                 if (req.query.scale) {
@@ -50,6 +51,10 @@ function create(server) {
                     if (data.length > 1) {
                         logger.debug(`FFMPEG output: ${data}`)
                         ws.send(`FFMPEG output: ${data}`);
+                        if (data.includes(".m3u8.tmp' for writing") && ready === false) {
+                            ws.send('FFMPEG hls stream ready')
+                            ready = true
+                        }
                     }
                 })
             }
