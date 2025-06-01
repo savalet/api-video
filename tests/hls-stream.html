@@ -83,12 +83,11 @@
         const video_duration = 9354;
         var time = 0;
         var changed_time = 0;
+        var playing = false; 
 
         socket.onopen = (event) => {
             socket.send("Client connected !");
             console.log('[DEBUG] Connected to websocket');
-            socket.send("ffmpeg");
-            console.log('[DEBUG] FFMPEG command sent to server');
         };
 
         socket.onmessage = (event) => {
@@ -149,6 +148,11 @@
         var playPauseButton = document.querySelector('.play-pause-button');
         playPauseButton.addEventListener('click', function() {
             if (player.paused) {
+                if (!playing) {
+                    socket.send("ffmpeg");
+                    console.log('[DEBUG] FFMPEG command sent to server');
+                    playing = true;
+                }
                 player.play();
                 playPauseButton.textContent = 'Pause';
             } else {

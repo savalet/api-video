@@ -43,7 +43,7 @@ function create(server) {
                     '-hls_time', '10',
                     '-hls_list_size', '0',
                     '-f', 'hls',
-                    'cache/dune/stream.m3u8'
+                    'cache/stream.m3u8'
                     //'pipe:1'
                 ])
 

@@ -11,7 +11,7 @@ const fs = require('fs')
 const logger = require('@savalet/easy-logs')
 const req_logger = require('../../../utils/req_logger')
 const auth = require('../../../utils/auth/middleware.js')
-const staticDir = path.join(__dirname, '../../../../cache/dune');
+const staticDir = path.join(__dirname, '../../../../cache');
 
 const route_name = "/stream/dl"
 
